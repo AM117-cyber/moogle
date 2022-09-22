@@ -58,26 +58,25 @@ public static class Moogle
 
         for (int a = i; i <= j; i++)
         {
-
             snippet += text[i];
-
         }
 
-        List<MatchCollection> matches = new List<MatchCollection>(Pquery.Count);
+        snippet = $" {snippet} ";
+
+        List<Match> matches = new List<Match>();
 
         foreach (var term in Pquery.Keys) {
-          matches.Add(Regex.Matches(snippet, term, RegexOptions.IgnoreCase));
+          matches.AddRange(Regex.Matches(snippet, $"\\W{term}\\W", RegexOptions.IgnoreCase));
         }
 
-        foreach (MatchCollection matchColl in matches) {
-          foreach (Match match in matchColl) {
-            snippet = snippet.Insert(match.Index, "<span style=\"background-color:yellow\">");
+        matches.Sort(new MatchIndexComparer(true));
+
+        foreach (Match match in matches) {
             snippet = snippet.Insert(match.Index + match.Length, "</span>");
-          }
+            snippet = snippet.Insert(match.Index, "<span style=\"background-color:yellow\">");
         }
 
         return snippet;
-
     }
     public static int[] FindRange(string text, int index)
     {
@@ -118,6 +117,30 @@ public static class Moogle
         initialized = true;
     }
 
+    public class MatchIndexComparer : IComparer<Match>
+    {
+        public bool Descending { get; }
+        public MatchIndexComparer(bool descending = false) {
+            Descending = descending;
+        }
+        public int Compare(Match? x, Match? y)
+        {
+            if (x is null && y is null) {
+              return 0;
+            }
+
+            if (x is null) {
+              return Descending ? 1 : -1;
+            }
+
+            if (y is null) {
+              return Descending ? -1 : 1;
+            }
+
+            var result = Math.Sign(x.Index - y.Index);
+            return Descending ? -1*result : result;
+        }
+    }
 }
 
 
