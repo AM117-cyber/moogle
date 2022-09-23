@@ -60,7 +60,7 @@ public class Similarity
 
 
             cos_similarity = (float)(Cos_Similarity(doc, Pquery, norm) + closeness);
-            if (cos_similarity > 0.02)
+            if (cos_similarity > 0)
                 Coincidences[doc] = cos_similarity;
         }
         return Coincidences;

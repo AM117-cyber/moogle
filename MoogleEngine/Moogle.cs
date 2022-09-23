@@ -17,7 +17,7 @@ public static class Moogle
         //ClosenessOperatorCheck(query);
         Dictionary<Document, float> Coincidences = Similarity.Similarity_Threshold(query, Pquery);
 
-        var Results = Coincidences.OrderByDescending(kvp => kvp.Value).Take(resultLength);
+        var Results = Coincidences.OrderByDescending(kvp => kvp.Value).Take(10);
 
         List<SearchItem> items = new List<SearchItem>();
         foreach (var result in Results)
