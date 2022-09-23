@@ -10,10 +10,11 @@ public static class Moogle
 
 
     public static SearchResult Query(string query)
-    {
+    {   
+        query = Regex.Replace(query, @"^[ ~]*|[ ~]*$","");
         var resultLength = 10;
         Dictionary<string, TermData> Pquery = DocumentProcessor.Process_Query(query);
-
+        //ClosenessOperatorCheck(query);
         Dictionary<Document, float> Coincidences = Similarity.Similarity_Threshold(query, Pquery);
 
         var Results = Coincidences.OrderByDescending(kvp => kvp.Value).Take(resultLength);
@@ -30,10 +31,8 @@ public static class Moogle
 
             return new SearchResult(items,query.Replace(suggest.query,suggest.suggested) );
         }
-        else
-        {
-            return new SearchResult(items, string.Empty);
-        }
+        
+            return new SearchResult(items);
     }
     public static string GetSnippet(Document document, Dictionary<string, TermData> Pquery)
     {
@@ -43,7 +42,7 @@ public static class Moogle
         Dictionary<string, TermData> content = document.Content;
         foreach (var term in queryterms)
         {
-            if (content.ContainsKey(term) && content[term].TF_IDF > highestTF_IDF)
+            if (content.ContainsKey(term) && content[term].TF_IDF >= highestTF_IDF)
             {
                 highestTF_IDF = ((float)content[term].TF_IDF);
                 TermForSnippet = term;
@@ -72,8 +71,8 @@ public static class Moogle
         matches.Sort(new MatchIndexComparer(true));
 
         foreach (Match match in matches) {
-            snippet = snippet.Insert(match.Index + match.Length, "</span>");
-            snippet = snippet.Insert(match.Index, "<span style=\"background-color:yellow\">");
+            snippet = snippet.Insert(match.Index + match.Length-1, "</span>");
+            snippet = snippet.Insert(match.Index+1, "<span style=\"background-color:yellow\">");
         }
 
         return snippet;

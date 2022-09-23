@@ -12,18 +12,19 @@ public static class DocumentProcessor
         foreach (var indivpath in path)
         {
             string text = File.ReadAllText(indivpath);
-            var Docs = new Document(indivpath, ProcessText(text));
+            string pattern = @"\w+";
+            var Docs = new Document(indivpath, ProcessText(text,pattern));
             yield return Docs;
         }
     }
 
-    public static Dictionary<string, TermData> ProcessText(string text)
+    public static Dictionary<string, TermData> ProcessText(string text, string pattern)
     {
-        var matches = Regex.Matches(text, @"\w+");//Match devuelve una coleccion.Averiguar si Trim() es necesario.
+        var matches = Regex.Matches(text, pattern);//Match devuelve una coleccion.Averiguar si Trim() es necesario.
         Dictionary<string, TermData> terms_of_doc = new Dictionary<string, TermData>();
         foreach (Match word in matches)
         {
-            string word_modified = Regex.Replace(word.Value.ToLower().Normalize(NormalizationForm.FormD), @"[^a-zA-z0-9 ]+", "");
+            string word_modified = Regex.Replace(word.Value.ToLower().Normalize(NormalizationForm.FormD), @"[^^!*a-zA-Z0-9 ]+", "");
             if (terms_of_doc.ContainsKey(word_modified))
             {
                 terms_of_doc[word_modified].AddIndex(word.Index);
@@ -71,14 +72,7 @@ public static Dictionary<string, double> IDF = Get_IDF();
     public static void Setting_each_TF_IDF(Dictionary<string, double> IDFs)
     {
         foreach (var doc in docs)
-        { double highestTF = 0;
-          foreach (var key in doc.Content.Keys)
-          {
-            if (doc.Content[key].TF > highestTF)
-            {
-                highestTF = doc.Content[key].TF;
-            }
-          }
+        { 
             int wordCount = doc.WordCount;
             foreach (var term in doc.Content.Keys)
             {
@@ -88,20 +82,13 @@ public static Dictionary<string, double> IDF = Get_IDF();
     }
 
     public static Dictionary<string, TermData> Process_Query(string query)
-    {
-        Dictionary<string, TermData> Pquery = ProcessText(query);
-        Get_TF_IDF(IDF,Pquery);
+    {   string pattern = @"\w+";
+        Dictionary<string, TermData> Pquery = ProcessText(query, pattern);
+        //Get_TF_IDF(IDF,Pquery);
         return Pquery;
     }
     public static void Get_TF_IDF(Dictionary<string, double> IDFs,Dictionary<string, TermData> Pquery)
-    {   double highestTF = 0;
-        foreach (var key in Pquery.Keys)
-        {
-            if (Pquery[key].TF > highestTF)
-            {
-                highestTF = Pquery[key].TF;
-            }
-        }
+    {   
         foreach (var key in Pquery.Keys)
         {
             if (IDFs.ContainsKey(key)) 
