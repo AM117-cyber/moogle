@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using System.Text;
 public class Similarity
 
 {
@@ -16,11 +17,11 @@ public class Similarity
 
         foreach (Match match in matchesImportance)
         {
-            var key = match.Value.Replace("*", "");
+            var key = match.Value.Replace("*", ""); 
             var count = match.Value.Length - key.Length;
             for (int i = 1; i <= count; i++)
             {
-                Pquery[key].TF++;
+                Pquery[Regex.Replace(key.ToLower().Normalize(NormalizationForm.FormD), @"[^a-zA-Z0-9 ]+", "")].TF++;
             }
         }
         DocumentProcessor.Get_TF_IDF(DocumentProcessor.IDF, Pquery);
@@ -34,18 +35,18 @@ public class Similarity
 
             foreach (Match match in matchesToAvoid)
             {
-                string term = match.Value.Replace("!", "");
+                string term = Regex.Replace(match.Value.ToLower().Normalize(NormalizationForm.FormD), @"[^a-zA-Z0-9 ]+", "");
                 Pquery.Remove(term);
                 if (doc.Content.ContainsKey(term))
                 {
                     cos_similarity = 0;
                 }
             }
-
+            
             foreach (Match match in matchesNeeded)
-            {
-                if (!doc.Content.ContainsKey(match.Value.Replace("^", "")))
-                {
+            {   string matchModified = Regex.Replace(match.Value.ToLower().Normalize(NormalizationForm.FormD), @"[^a-zA-Z0-9 ]+", "");
+                if (!doc.Content.ContainsKey(matchModified)) 
+                { 
                     cos_similarity = 0;
                 }
             }

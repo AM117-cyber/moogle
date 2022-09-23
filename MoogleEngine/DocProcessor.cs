@@ -13,18 +13,23 @@ public static class DocumentProcessor
         {
             string text = File.ReadAllText(indivpath);
             string pattern = @"\w+";
-            var Docs = new Document(indivpath, ProcessText(text,pattern));
+            var Docs = new Document(indivpath, ProcessText(text, pattern));
             yield return Docs;
         }
     }
 
     public static Dictionary<string, TermData> ProcessText(string text, string pattern)
     {
+
         var matches = Regex.Matches(text, pattern);//Match devuelve una coleccion.Averiguar si Trim() es necesario.
         Dictionary<string, TermData> terms_of_doc = new Dictionary<string, TermData>();
         foreach (Match word in matches)
         {
-            string word_modified = Regex.Replace(word.Value.ToLower().Normalize(NormalizationForm.FormD), @"[^^!*a-zA-Z0-9 ]+", "");
+            if (word.Value == "niño")
+            {
+                
+            }
+            string word_modified = Regex.Replace(word.Value.ToLower().Normalize(NormalizationForm.FormD), @"[^a-zA-Z0-9 ]+", "");
             if (terms_of_doc.ContainsKey(word_modified))
             {
                 terms_of_doc[word_modified].AddIndex(word.Index);
@@ -41,7 +46,7 @@ public static class DocumentProcessor
 
     public static Dictionary<string, double> Get_IDF()
     {
-        if (IDFs is null) 
+        if (IDFs is null)
         {
             int N = Document.Total_of_Docs;
             IDFs = new Dictionary<string, double>();
@@ -65,39 +70,40 @@ public static class DocumentProcessor
                 IDFs[term] = Math.Log10(idf);
             }
         }
-        
+
         return IDFs;
     }
-public static Dictionary<string, double> IDF = Get_IDF();
+    public static Dictionary<string, double> IDF = Get_IDF();
     public static void Setting_each_TF_IDF(Dictionary<string, double> IDFs)
     {
         foreach (var doc in docs)
-        { 
+        {
             int wordCount = doc.WordCount;
             foreach (var term in doc.Content.Keys)
             {
-                doc.Content[term].TF_IDF =((doc.Content[term].TF)/wordCount) * IDFs[term];
+                doc.Content[term].TF_IDF = ((doc.Content[term].TF) / wordCount) * IDFs[term];
             }
         }
     }
 
     public static Dictionary<string, TermData> Process_Query(string query)
-    {   string pattern = @"\w+";
+    {
+        string pattern = @"\w+";
         Dictionary<string, TermData> Pquery = ProcessText(query, pattern);
         //Get_TF_IDF(IDF,Pquery);
         return Pquery;
     }
-    public static void Get_TF_IDF(Dictionary<string, double> IDFs,Dictionary<string, TermData> Pquery)
-    {   
+    public static void Get_TF_IDF(Dictionary<string, double> IDFs, Dictionary<string, TermData> Pquery)
+    {
         foreach (var key in Pquery.Keys)
         {
-            if (IDFs.ContainsKey(key)) 
+            if (IDFs.ContainsKey(key))
             {
-              Pquery[key].TF_IDF = (Pquery[key].TF/Pquery.Count) * IDFs[key];
+                Pquery[key].TF_IDF = (Pquery[key].TF / Pquery.Count) * IDFs[key];
             }
-            else 
+            else
             {
-              Pquery[key].TF_IDF = 0;
+                Pquery[key].TF_IDF = 0;
             }
         }
     }
