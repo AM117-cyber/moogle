@@ -25,10 +25,7 @@ public static class DocumentProcessor
         Dictionary<string, TermData> terms_of_doc = new Dictionary<string, TermData>();
         foreach (Match word in matches)
         {
-            if (word.Value == "niño")
-            {
-                
-            }
+            
             string word_modified = Regex.Replace(word.Value.ToLower().Normalize(NormalizationForm.FormD), @"[^a-zA-Z0-9 ]+", "");
             if (terms_of_doc.ContainsKey(word_modified))
             {
