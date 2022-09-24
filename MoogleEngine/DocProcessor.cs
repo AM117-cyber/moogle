@@ -5,7 +5,7 @@ public static class DocumentProcessor
     //the two dots get the path in which the folder to the project is located, you only specify the content folder.
     private static Dictionary<string, double>? IDFs = null;
     public static IEnumerable<Document> docs = ProcessFolder(Directory.GetFiles(@"..\Content")).ToList();
-    //hasta aqui funciona pero el orden no es el mismo que el de la carpeta,aunque eso no debe importar.
+    
 
     public static IEnumerable<Document> ProcessFolder(string[] path)
     {
@@ -21,7 +21,7 @@ public static class DocumentProcessor
     public static Dictionary<string, TermData> ProcessText(string text, string pattern)
     {
 
-        var matches = Regex.Matches(text, pattern);//Match devuelve una coleccion.Averiguar si Trim() es necesario.
+        var matches = Regex.Matches(text, pattern);//Match devuelve una coleccion.
         Dictionary<string, TermData> terms_of_doc = new Dictionary<string, TermData>();
         foreach (Match word in matches)
         {
