@@ -2,7 +2,14 @@
 
 ![](moogle.png)
 
-> Proyecto de Programación I. Facultad de Matemática y Computación. Universidad de La Habana. Curso 2021.
+> Proyecto de Programación I. Facultad de Matemática y Computación. Universidad de La Habana.   
+
+Nombre: Ana Melissa Alonso Reina.
+Grupo: C-112.
+
+El objetivo de este proyecto era crear un buscador de documentos capaz de buscar inteligentemente un texto en un conjunto de documentos. 
+Para alcanzar este propósito utilicé el modelo vectorial, el cual se basa en obtener la similitud entre un documento y la consulta del usuario(query) mediante el cálculo del coseno del ángulo comprendido entre ambos vectores(documento y query). TF-IDF de cada te
+
 
 Moogle! es una aplicación *totalmente original* cuyo propósito es buscar inteligentemente un texto en un conjunto de documentos.
 

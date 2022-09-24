@@ -12,7 +12,6 @@ public static class Moogle
     public static SearchResult Query(string query)
     {   
         query = Regex.Replace(query, @"^[ ~]*|[ ~]*$","");
-        var resultLength = 10;
         Dictionary<string, TermData> Pquery = DocumentProcessor.Process_Query(query);
         //ClosenessOperatorCheck(query);
         Dictionary<Document, float> Coincidences = Similarity.Similarity_Threshold(query, Pquery);
@@ -32,7 +31,7 @@ public static class Moogle
             return new SearchResult(items,query.Replace(suggest.query,suggest.suggested) );
         }
         
-            return new SearchResult(items);
+            return new SearchResult(items,string.Empty);
     }
     public static string GetSnippet(Document document, Dictionary<string, TermData> Pquery)
     {
