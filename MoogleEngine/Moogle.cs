@@ -1,6 +1,6 @@
 ﻿using System.Linq;
 using System.Text.RegularExpressions;
-
+using System.Text;
 namespace MoogleEngine;
 
 
@@ -27,8 +27,18 @@ public static class Moogle
         if (Coincidences.Count <= 3 && WordsForSuggestion.Count != 0)
         {
             var suggest = Similarity.GetSuggestions(WordsForSuggestion);
-
-            return new SearchResult(items,query.Replace(suggest.query,suggest.suggested) );
+            string[] Query = query.Split(" ");
+            for (int i = 0; i < Query.Length; i++)
+            {
+                if (Regex.Replace(Query[i].ToLower().Normalize(NormalizationForm.FormD), @"[^a-zA-Z0-9 ]+", "") == suggest.query)
+                {
+                    Query[i] = suggest.query;
+                }
+            }
+                
+            
+            
+            return new SearchResult(items,string.Join(" ", Query).Replace(suggest.query,suggest.suggested) );
         }
         
             return new SearchResult(items,string.Empty);
