@@ -5,7 +5,7 @@ public class Similarity
 {
 
 
-    public static Dictionary<Document, float> Similarity_Threshold(string query, Dictionary<string, TermData> Pquery)
+    public static Dictionary<Document, float> SimilarityThreshold(string query, Dictionary<string, TermData> Pquery)
     {
 
         Dictionary<Document, float> Coincidences = new Dictionary<Document, float>();
@@ -24,7 +24,7 @@ public class Similarity
                 Pquery[Regex.Replace(key.ToLower().Normalize(NormalizationForm.FormD), @"[^a-zA-Z0-9 ]+", "")].TF++;
             }
         }
-        DocumentProcessor.Get_TF_IDF(DocumentProcessor.IDF, Pquery);
+        DocumentProcessor.GetTFIDF(DocumentProcessor.IDF, Pquery);
         double queryNorm = VectorNorm(Pquery);
 
         foreach (var doc in DocumentProcessor.docs)
@@ -56,7 +56,7 @@ public class Similarity
                 continue;
             }
 
-            var closeness = ClosenessOperatorCheck(query, doc, norm);
+            var closeness = ClosenessOperatorInfluence(query, doc, norm);
 
 
             cos_similarity = (float)(Cos_Similarity(doc, Pquery, norm) + closeness);
@@ -93,7 +93,7 @@ public class Similarity
         return cos_similarity;
     }
 
-    public static double ClosenessOperatorCheck(string query, Document document, double norm)
+    public static double ClosenessOperatorInfluence(string query, Document document, double norm)
     {
         
         string pattern1 = @"\w+ *~";
