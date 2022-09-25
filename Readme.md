@@ -7,129 +7,45 @@
 Nombre: Ana Melissa Alonso Reina.
 Grupo: C-112.
 
-El objetivo de este proyecto era crear un buscador de documentos capaz de buscar inteligentemente un texto en un conjunto de documentos. 
-Para alcanzar este propósito utilicé el modelo vectorial, el cual se basa en obtener la similitud entre un documento y la consulta del usuario(query) mediante el cálculo del coseno del ángulo comprendido entre ambos vectores(documento y query). TF-IDF de cada te
+Con el objetivo de que el programa realizara una búsqueda inteligente y devolviera los resultados de esta ordenados por su relevancia de mayor a menor, se utilizó un modelo vectorial, puesto que este da precisamente un valor de acuerdo al grado de similitud de un documento respecto a la consulta(query). Para obtener el grado de similitud se calculó el coseno del ángulo comprendido entre dos vectores(documento, query), cuya fórmula es  
 
+En la cual tanto el query como el documento son vectores formados por los valores de TF-IDF de cada una de sus palabras. Por lo tanto, para poner en práctica esta función de ranking del modelo vectorial fue necesario calcular el TF-IDF de cada palabra por documento y el TF-IDF de cada palabra del query.Ver(1)
+Una vez obtenido cada TF-IDF y asociado cada resultado de la función ranking con su documento en cuestión se ordenan hasta los 10 primeros resultados de mayor a menor para mostrarle un snippet-con una vecindad de la palabra de mayor importancia(TF-IDF) del query- de ellos al usuario; en caso de que la cantidad de resultados de la búsqueda sea inferior a 4 se verifica si hay alguna palabra del query que no aparezca en ningún documento, luego se halla la mayor similitud entre esa palabra ausente de los documentos y todas las palabras de los documentos para obtener un término que sea lo más similar posible a aquel introducido en el query pero que sí aparezca en alguno de los documentos entre los que buscamos; esto nos permitirá sugerirle un nuevo query al usuario con el fin de que al utilizar esta sugerencia en su búsqueda obtenga más resultados que los obtenidos con el anterior query y a la vez, permitirá brindar una sugerencia al usuario en caso de que ingrese un término mal escrito, siempre que los resultados de la búsqueda  sean inferiores a 4. Es necesario mencionar que los documentos sobre los cuales se realizará la búsqueda son procesados al inicio del programa para evitar prolongar el tiempo de búsqueda. 
+Hay tres operadores que son adicionados con el fin de darle más control al usuario sobre los resultados de la búsqueda. Estos son:
+! – Si este operador aparece delante de una palabra del query entonces antes de calcular la similitud entre un documento y el query se verifica que la palabra en cuestión no aparezca en el documento, en caso contrario, a ese documento se le asociaría una similitud de 0 con el query,puesto que no puede ser devuelto como resultado de la búsqueda.
+^ -Si este operador aparece delante de una palabra del query entonces igual que con el operador anterior verificamos si la palabra aparece en el documento, solo que en caso de no aparecer es que le adjudicamos una similitud de 0 al documento con el query, puesto que la palabra debe aparecer en el documento como requisito para que sea un resultado válido.
+* - Si este operador aparece delante de una palabra del query se incrementa el TF de ella tantas veces como aparezca dicho operador frente a la misma, este procedimiento se hace antes de sacar el TF-IDF de cada elemento del query, aumentando por lo tanto la importancia de la palabra a la cual se le aplica este operador, lo que será tomado en cuenta en el cálculo de la similitud entre un documento y el query.
+~ - Si este operador aparece entre dos o más palabras del query, se halla mediante los índices de las mismas la menor distancia entre ellas por documento. El resultado de dividir 1 entre este valor se suma a la similitud del documento correspondiente, puesto que lo que se pretende es otorgarle una mayor importancia(score) a los documentos mientras mayor sea la cercanía entre las palabras del query unidas por este operador.
+Clase Document
+En esta clase se define un tipo de variable que representa a un documento, teniendo entre sus propiedades título, cantidad total de palabras, su contenido(representado con un diccionario en el cual a cada palabra se le hace corresponder su TermData) y su norma.
+Clase TermData
+En esta clase se define el tipo de variable TermData que representa los términos de un mismo documento, por lo cual tienen un TF,TF-IDF, así como los índices en los que aparece ese término en el documento entre sus propiedades.
+Clase DocumentProcessor
+ 
+En esta clase está el método ProcessFolder, el cual recibe una string[] conteniendo las direcciones de cada uno de los documentos en la carpeta Content para procesarlos con el método ProcessText y devolver cada uno de los documentos una vez procesados utilizando yield return.
+En este método recibe dos string: el texto del documento y el patrón por el cual se utilizará Regex.Matches sobre el documento. Regex.Matches devuelve una colección de Match que consiste en cada elemento que cumplía con el patrón \w+ con su índice, por esta razón utilizo Regex.Matches para quedarme solo con los caracteres que son alfanuméricos del texto y con el índice de cada uno, debido a que estos son los únicos que tienen relevancia la hora de realizar la búsqueda. Una vez hecho esto aplico sobre cada elemeto de MatchCollection una normalización con esta línea de código:
+string word_modified = Regex.Replace(word.Value.ToLower().Normalize(NormalizationForm.FormD), @"[^a-zA-Z0-9 ]+", "");
+ 
+Que guarda en un nuevo string a la palabra original llevados todos sus caracteres a minúscula y eliminando las tildes, dierésis y ~ de las ñ para que la presencia de estos caracteres y el uso de mayúsculas y minúsculas no afecte la búsqueda. Dentro de ProcessText también obtenemos el TF y una lista con sus índices para cada palabra del texto que analizamos, lo cual podemos hacer porque al inicio del método creamos un Dictionary<string, TermData> cuyas llaves son las palabras del documento después de haber sido normalizadas y el valor que le corresponde a cada una es una variable de tipo TermData, a la cual le incrementamos su TF y añadimos otro valor a su lista de índices cada vez que su llave(palabra normalizada) se repita en el documento.
+En esta clase también está el objeto IDF, que es un Dictionary<string, double> en el cual se guardan las distintas palabras del conjunto de documentos con su IDF mediante el método GetIDF, el cual no recibe ningún dato porque no se ejecuta sobre una instancia, sino sobre el conjunto de documentos. En este método se itera por los documentos y por el contenido de cada uno, de modo que cada vez que se pase por un término diferente en un documento se incorpore dicho término como llave del diccionario IDF y se le asocie un valor de 1, en caso de que el término ya sea una llave de IDF se le suma uno a su valor. De esta forma se obtiene la cantidad de documentos en la que aparece cada término-DF-, por lo que luego se le asocia a cada término el logaritmo en base 10 del resultado de dividir el total de documentos entre el DF del término, teniendo finalmente cada término con su IDF.
+Como ya tenemos el TF y el IDF de cada palabra podemos calcular el TF-IDF.Para esto se utiliza el método SettingEachTFIDF, en el cual se itera por los documentos de cada término dándole valor al TF-IDF de su TermData que había sido inicializado en 0. Para esto se divide el TF del término entre la cantidad de palabras del documento y esto se multiplica por el IDF de dicho término.
+Con el método ProcessQuery se procesa el texto del query ingresado por el usuario llamando al método ProcessText y se devuelve un Dictionary<string, TermData>. Luego con el método GetTFIDF se obtiene el TF-IDF de cada palabra del query, iterando por cada una de ellas y dividiendo el TF entre la cantidad de palabras del documento para multiplicar el resultado por el IDF del término.
 
-Moogle! es una aplicación *totalmente original* cuyo propósito es buscar inteligentemente un texto en un conjunto de documentos.
-
-Es una aplicación web, desarrollada con tecnología .NET Core 6.0, específicamente usando Blazor como *framework* web para la interfaz gráfica, y en el lenguaje C#.
-La aplicación está dividida en dos componentes fundamentales:
-
-- `MoogleServer` es un servidor web que renderiza la interfaz gráfica y sirve los resultados.
-- `MoogleEngine` es una biblioteca de clases donde está... ehem... casi implementada la lógica del algoritmo de búsqueda.
-
-Hasta el momento hemos logrado implementar gran parte de la interfaz gráfica (que es lo fácil), pero nos está causando graves problemas la lógica. Aquí es donde entras tú.
-
-## Tu misión
-
-Tu misión (si decides aceptarla) es ayudarnos a implementar el motor de búsqueda de Moogle! (sí, el nombre es así con ! al final). Para ello, deberás modificar el método `Moogle.Query` que está en la clase `Moogle` del proyecto `MoogleEngine`.
-
-Este método devuelve un objeto de tipo `SearchResult`. Este objeto contiene los resultados de la búsqueda realizada por el usuario, que viene en un parámetro de tipo `string` llamado `query`.
-
-Esto es lo que hay ahora en este método:
-
-```cs
-public static class Moogle
-{
-    public static SearchResult Query(string query) {
-        // Modifique este método para responder a la búsqueda
-
-        SearchItem[] items = new SearchItem[3] {
-            new SearchItem("Hello World", "Lorem ipsum dolor sit amet", 0.9f),
-            new SearchItem("Hello World", "Lorem ipsum dolor sit amet", 0.5f),
-            new SearchItem("Hello World", "Lorem ipsum dolor sit amet", 0.1f),
-        };
-
-        return new SearchResult(items, query);
+Clase Similarity
+En esta clase se encuentra el método SimilarityThreshold, que recibe el query original y el query procesado, es decir, el Dictionary<string, TermData> que da como resultado ProcessText. En este método se construye un Dictionary<Document,float> llamado Coincidences que tendrá como llaves a los documentos que el usuario recibirá como resultado de su búsqueda; como el query puede tener operadores que influirán en estos resultados, lo primero que se hace es revisar si alguno de estos operadores fue utilizado en el query.
+Abajo se utilizan tres foreach(uno para cada operador, exceptuando el de cercanía), los cuales se ejecutan solo si el operador que le corresponde es utilizado en el query. En el foreach que itera por cada una de las palabras que tengan asteriscos frente a ellas, se obtiene el número de asteriscos frente a cada palabra y se incrementa el TF de acuerdo al número de asteriscos utilizados. Luego se llama al método GetTFIDF de la clase DocumentProcessor y se calcula la norma del vector query con el método VectorNorm(ver 7 líneas más abajo), método que recibe un Dictionary<string, TermData> y  suma cada uno de los cuadrados de los TF-IDF de cada llave del diccionario y devuelve la raíz cuadrada de esta suma. 
+En los otros dos foreach se le da un valor de 0 a la similitud entre el documento y el query, en dependencia del operador utilizado; en caso de utilizar el operador ! si la palabra que viene a continuación de él en el query aparece en el texto, su similitud con el query es de 0 y de utilizar el operador ^, si el documento no contiene la palabra que acompaña al operador su similitud también es de 0.
+Luego por cada documento se declara una variable que guarda el resultado del método ClosenessOperatorInfluence , el cual utiliza Regex.Matches y el método FixMatches(elimina el operador de cercanía y los espacios entre las palabras a las cuales se les aplica este operador) para que si un documento contiene a ambas palabras y esas palabras son distintas calcular la menor distancia entre ellas en ese documento con el método GetShortestDistance. ClosenessOperatorInfluence devuelve el resultado de dividir entre 1 el producto del double obtenido en GetShortestDistance y la norma del query por la norma del documento. Lo que devuelve este método es guardado en la variable closeness, la cual se suma a la similitud entre dos documentos que se halla por la fórmula del coseno, para obtener la similitud total entre documento y query. Este valor de similitud se le asocia al documento en un diccionario en el cual a cada documento le corresponde su similitud con el query, diccionario que es ordenado por sus valores de mayor a menor en el método Query de la clase Moogle, para guardar en la variable resultado sus 10 primeros elementos. En el método WordsForSuggestion de la clase Similarity se comprueba si hay alguna palabra del query que no aparezca en los documentos con el método WordExists y se guardan en una lista todas las palabras del query que devuelvan falso a WordExists. El método GetSuggestions recibe esta lista y encuentra entre todos sus elementos cuál tiene mayor similitud con otra palabra de los documentos, devolviendo una dupla de strings con la palabra del query y su sugerencia. En el método Query de la clase Moogle solo se llama a este método si el número de los resultados de la búsqueda es menor que 4 y la lista devuelta por WordsForSuggestion no está vacía. Entonces, con la dupla devuelta por GetSuggestions se sustituye en el query la primera palabra de la dupla por la palabra sugerida(segunda de la dupla) para devolverle una sugerencia al usuario. 
+Al final de la clase Similarity se encuentra el método SimilarityBetweenWords que utiliza la distancia de Levenshtein para determinar el número de cambios necesarios para convertir la palabra de la búsqueda en otra y le resta este número al total de letras de la palabra del query para obtener su similitud con la otra.
+Clase Moogle
+Además del método mencionado anteriormente, en esta clase se encuentra el método GetSnippet, el cual determina por documento qué palabra del query tiene más peso en él para mostrar un fragmento del documento que contenga a esta palabra.Dentro de este método se llama a otro llamado FindRange, que devuelve los índices del inicio y fin por documento para asegurarse de que ninguna palabra quede incompleta en los extremos del snippet. Luego, cada elemento del query se coloca en una lista utilizando Regex.Matches, ordenamos los elementos de esta lista por sus índices de mayor a menor e insertamos la líneas "</span>"
+Al final y "<span style=\"background-color:yellow\">"
+ al inicio de la palabra respectivamente.
+El último método de esta clase es Initialize, que está al inicio del buscador, el cual no puede comenzar la búsqueda a menos que todos los documentos hayan sido procesados de antemano.
+Este método en Index.razor se ejecuta cuando el programa está listo para empezar y lo que hace es llamar al método Initialize.
+protected override void OnInitialized()
+    {
+        Moogle.Initialize();   
     }
-}
-```
 
-Como puedes ver, dado que no sabemos implementarlo, hemos cableado la solución para que al menos devuelva algo.
 
-El tipo `SearchResult` recibe en su constructor dos argumentos: `items` y `suggestion`. El parámetro `items` es un array de objetos de tipo `SearchItem`. Cada uno de estos objetos representa un posible documento que coincide al menos parcialmente con la consulta en `query`.
-
-Cada `SearchItem` recibe 3 argumentos en su constructor: `title`, `snippet` y `score`. El parámetro `title` debe ser el título del documento (el nombre del archivo de texto correspondiente). El parámetro `snippet` debe contener una porción del documento donde se encontró el contenido del `query`. El parámetro `score` tendrá un valor de tipo `float` que será más alto mientras más relevante sea este item.
-
-> ⚠️ Por supuesto, debes devolver los `items` ordenados de mayor a menor por este valor de `score`!
-
-El parámetro `suggestion` de la clase `SearchResult` es para darle una sugerencia al usuario cuando su búsqueda da muy pocos resultados (tú debes decidir qué serían pocos resultados en este contexto). Esta sugerencia debe ser algo similar a la consulta del usuario pero que sí exista, de forma que si el usuario se equivoca, por ejemplo, escribiendo `"reculsibidá"`, y no aparece (evidentemente) ningún documento con ese contenido, le podamos sugerir la palabra `"recursividad"`.
-
-## Sobre la búsqueda
-
-Queremos que la búsqueda sea lo más inteligente posible, por ese motivo no podemos limitarnos a los documentos donde aparece exactamente la frase introducida por el usuario. Aquí van algunos requisitos que debe cumplir esta búsqueda, pero eres libre de adicionar cualquier otra funcionalidad que ayude a mejorar y hacer más inteligente la búsqueda.
-
-- En primer lugar, el usuario puede buscar no solo una palabra sino en general una frase cualquiera.
-- Si no aparecen todas las palabras de la frase en un documento, pero al menos aparecen algunas, este documento también queremos que sea devuelto, pero con un
-`score` menor mientras menos palabras aparezcan.
-- El orden en que aparezcan en el documento los términos del `query` en general no debe importar, ni siquiera que aparezcan en lugares totalmente diferentes del documento.
-- Si en diferentes documentos aparecen la misma cantidad de palabras de la consulta, (por ejemplo, 2 de las 3 palabras de la consulta `"algoritmos de ordenación"`), pero uno de ellos contiene una palabra más rara (por ejemplo, `"ordenación"` es más rara que `"algoritmos"` porque aparece en menos documentos), el documento con palabras más raras debe tener un `score` más alto, porque es una respuesta más específica.
-- De la misma forma, si un documento tiene más términos de la consulta que otro, en general debería tener un `score` más alto (a menos que sean términos menos relevantes).
-- Algunas palabras excesivamente comunes como las preposiciones, conjunciones, etc., deberían ser ignoradas por completo ya que aparecerán en la inmensa mayoría de los documentos (esto queremos que se haga de forma automática, o sea, que no haya una lista cableada de palabras a ignorar, sino que se computen de los documentos).
-
-### Operadores de búsqueda
-
-Con estas ideas ya podemos hacer algo, pero para mejorar la búsqueda aún más queremos adicionar operadores a la consulta que permitan darle más control al usuario. Por ejemplo:
-
-- Un símbolo `!` delante de una palabra (e.j., `"algoritmos de búsqueda !ordenación"`) indica que esa palabra **no debe aparecer** en ningún documento que sea devuelto.
-- Un símbolo `^` delante de una palabra (e.j., `"algoritmos de ^ordenación"`) indica que esa palabra **tiene que aparecer** en cualquier documento que sea devuelto.
-- Un símbolo `~` entre dos o más términos indica que esos términos deben **aparecer cerca**, o sea, que mientras más cercanos estén en el documento mayor será la relevancia. Por ejemplo, para la búsqueda `"algoritmos ~ ordenación"`, mientras más cerca están las palabras `"algoritmo"` y `"ordenación"`, más alto debe ser el `score` de ese documento.
-- Cualquier cantidad de símbolos `*` delante de un término indican que ese término es más importante, por lo que su influencia en el `score` debe ser mayor que la tendría normalmente (este efecto será acumulativo por cada `*`, por ejemplo `"algoritmos de **ordenación"` indica que la palabra `"ordenación"` tiene dos veces más prioridad que `"algoritmos"`).
-
-### Ideas extras
-
-Nuestros usuarios son muy exigentes, pero no podemos darles todo. Algunas ideas que no creemos que sean estrictamente necesarias pero que harían nuestra aplicación mucho mejor son:
-
-- Si las palabras exactas no aparecen, pero aparecen palabras derivadas de la misma raíz, también queremos devolver esos documentos (por ejemplo, si no está `"ordenación"` pero estar `"ordenados"`, ese documento puede devolverse pero con un `score` menor).
-- Si aparecen palabras relacionadas aunque no tengan la misma raíz (por ejemplo si la búsqueda es `"computadora"` y el documento tiene `"ordenador"`), también queremos devolver esos documentos pero con menor `score` que si apareciera la palabra exacta o una de la misma raíz.
-
-### Evaluación del `score`
-
-De manera general el valor de `score` debe corresponder a cuán relevante es el documento devuelto para la búsqueda realizada. Como te hemos explicado antes, hay muchos factores que aumentan o disminuyen esta relevancia.
-
-Como todos estos factores están en oposición unos con otros, debes encontrar una forma de balancearlos en alguna fórmula que permita evaluar todo documento con respecto a toda consulta posible. Si un documento no tiene ningún término de la consulta, y no es para nada relevante, entonces su `score` sería `0` como mínimo, pero no debe haber ningún error o excepción en estos casos. Tú debes decidir cómo dar peso a cada elemento que puede influir en el `score` para que los documentos devueltos tengan la mayor relevancia posible.
-
-### Algoritmos de búsqueda
-
-Te hemos dado este proyecto justamente a tí porque sabemos que ustedes en MatCom tienen conocimientos que el resto de nosotros ni imaginamos. En particular, sabemos que hay algo llamado "modelo vectorial" que aparentemente tiene que ver con un arte arcano llamado "álgebra" que permite hacer estas búsquedas muchísimo más rápido que con un simple ciclo `for` por cada documento. De más está decir que esperamos que hagas gala de estos poderes extraordinarios que la matemática te concedió, porque para hacer esto con un doble `for` hubiéramos contratado a cualquier otro.
-
-Si te sirve de algo, hace unos meses contratamos a un gurú de los algoritmos de búsqueda para ver si nos podía enseñar a implementar este proyecto por nosotros mismos, y nos dio una conferencia de 4 horas de la que no entendimos casi nada (debía ser uno de ustedes, porque parecía llevar meses sin afeitar y hablaba solo consigo mismo, susurrando cosas como "turing completo" y "subespacio propio"). En fin, aunque de poco sirvió, al menos uno de nosotros recordó, luego de la conferencia, que había algo llamado "TF-IDF" que aparentemente era la clave para resolver este problema de búsqueda. Seguro que tu sabes de qué se trata.
-
-## Sobre la interfaz gráfica
-
-Como verás cuando ejecutes la aplicación (que se explica más abajo), la interfaz gráfica es bastante pobre. En principio, no tienes obligación de trabajar en esta parte del proyecto (sabemos que ustedes los científicos de la computación están por encima de estas mundeces).
-
-Pero si nos quieres ayudar, eres libre de modificar la interfaz gráfica todo lo que desees, eso sí, siempre que se mantenga la idea original de la aplicación. Si te interesa aprender Blazor, HTML, o CSS, eres libre de jugar con el código de la interfaz gráfica, que está en el proyecto `MoogleServer`.
-
-## Sobre el contenido a buscar
-
-La idea original del proyecto es buscar en un conjunto de archivos de texto (con extensión `.txt`) que estén en la carpeta `Content`. Desgraciadamente, nuestro último programador que sabía cargar y leer archivos fue contratado por nuestra compañía enemiga *MoneySoft*. Por lo tanto, tendrás que lidiar con esta parte tú mismo.
-
-## Ejecutando el proyecto
-
-Lo primero que tendrás que hacer para poder trabajar en este proyecto es instalar .NET Core 6.0 (lo que a esta altura imaginamos que no sea un problema, ¿verdad?). Luego, solo te debes parar en la carpeta del proyecto y ejecutar en la terminal de Linux:
-
-```bash
-make dev
-```
-
-Si estás en Windows, debes poder hacer lo mismo desde la terminal del WSL (Windows Subsystem for Linux). Si no tienes WSL ni posibilidad de instalarlo, deberías considerar seriamente instalar Linux, pero si de todas formas te empeñas en desarrollar el proyecto en Windows, el comando *ultimate* para ejecutar la aplicación es (desde la carpeta raíz del proyecto):
-
-```bash
-dotnet watch run --project MoogleServer
-```
-
-## Sobre la ingeniería de software
-
-Por supuesto, queremos que este proyecto sea lo más extensible y mantenible posible, incluso por personas con inteligencia nivel normal, no solo superdotados; así que agradeceríamos que tengas cuidado con la organización, los nombres de los métodos y clases, los miembros que deben ser públicos y privados, y sobre todo, poner muchos comentarios que expliquen por qué haces cada cosa. Sino, luego vendrá algún pobre infeliz (que no será de MatCom) y no sabrá por donde entrarle al proyecto.
-
-## Palabras finales
-
-Hasta aquí las ideas que tenemos **por ahora**.
-
-Como bien sabes, los proyectos de software nunca están completos, y los clientes nunca están satisfechos, así que es probable que en las próximas semanas adicionemos algunas ideas nuevas. Estamos confiados en que tu código será lo suficientemente extensible como para acomodar estas ideas a medida que surjan.
-
-Ah, por otro lado, nuestros diseñadores siguen trabajando en mejorar la interfaz gráfica (están ahora mismo bajo régimen de pan y agua hasta que esto sea vea medianamente bonito). Por lo tanto, es muy probable que te enviemos actualizaciones de `MoogleServer` durante el tiempo que dura el proyecto.
-
-Hasta entonces! 🖖
