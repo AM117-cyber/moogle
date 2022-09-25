@@ -12,9 +12,9 @@ public static class Moogle
     public static SearchResult Query(string query)
     {   
         query = Regex.Replace(query, @"^[ ~]*|[ ~]*$","");
-        Dictionary<string, TermData> Pquery = DocumentProcessor.Process_Query(query);
+        Dictionary<string, TermData> Pquery = DocumentProcessor.ProcessQuery(query);
         //ClosenessOperatorCheck(query);
-        Dictionary<Document, float> Coincidences = Similarity.Similarity_Threshold(query, Pquery);
+        Dictionary<Document, float> Coincidences = Similarity.SimilarityThreshold(query, Pquery);
 
         var Results = Coincidences.OrderByDescending(kvp => kvp.Value).Take(10);
 
@@ -24,7 +24,7 @@ public static class Moogle
             items.Add(new SearchItem(result.Key.Title + " " + result.Value, GetSnippet(result.Key, Pquery), result.Value));
         }
         List<string> WordsForSuggestion = Similarity.WordsForSuggestion(Pquery.Keys);
-        if (Coincidences.Count <= 3 && WordsForSuggestion.Count != 0)
+        if (Coincidences.Count < 4 && WordsForSuggestion.Count != 0)
         {
             var suggest = Similarity.GetSuggestions(WordsForSuggestion);
             string[] Query = query.Split(" ");
@@ -119,7 +119,7 @@ public static class Moogle
         if (!initialized)
         {
 
-            DocumentProcessor.Setting_each_TF_IDF(DocumentProcessor.Get_IDF());
+            DocumentProcessor.SettingEachTFIDF(DocumentProcessor.GetIDF());
 
         }
         initialized = true;

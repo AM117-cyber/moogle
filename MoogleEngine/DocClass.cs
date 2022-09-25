@@ -8,16 +8,17 @@ public class Document
    public int WordCount { get; }
    private string pattern = @"\w+";
 
+
     public Document(string path, Dictionary<string,TermData> content)
     {
         this.Path = path;
-        this.Title = $"''{Getting_Title(path)}''";
+        this.Title = $"''{GettingTitle(path)}''";
         this.Content = content;
         this.WordCount = Regex.Split(File.ReadAllText(path).Trim(), pattern).Length;
     }
 
 
-    private string Getting_Title(string path)
+    private string GettingTitle(string path)
     {
         string title = string.Empty;
         path = path.Remove(0, 11);

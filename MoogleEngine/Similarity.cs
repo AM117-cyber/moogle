@@ -31,7 +31,7 @@ public class Similarity
         {
             double norm = VectorNorm(doc.Content) * queryNorm;
 
-            float cos_similarity = -1;
+            float cosSimilarity = -1;
 
             foreach (Match match in matchesToAvoid)
             {
@@ -39,7 +39,7 @@ public class Similarity
                 Pquery.Remove(term);
                 if (doc.Content.ContainsKey(term))
                 {
-                    cos_similarity = 0;
+                    cosSimilarity = 0;
                 }
             }
             
@@ -47,11 +47,11 @@ public class Similarity
             {   string matchModified = Regex.Replace(match.Value.ToLower().Normalize(NormalizationForm.FormD), @"[^a-zA-Z0-9 ]+", "");
                 if (!doc.Content.ContainsKey(matchModified)) 
                 { 
-                    cos_similarity = 0;
+                    cosSimilarity = 0;
                 }
             }
 
-            if (cos_similarity == 0)
+            if (cosSimilarity == 0)
             {
                 continue;
             }
@@ -59,9 +59,9 @@ public class Similarity
             var closeness = ClosenessOperatorInfluence(query, doc, norm);
 
 
-            cos_similarity = (float)(Cos_Similarity(doc, Pquery, norm) + closeness);
-            if (cos_similarity > 0)
-                Coincidences[doc] = cos_similarity;
+            cosSimilarity = (float)(CosSimilarity(doc, Pquery, norm) + closeness);
+            if (cosSimilarity > 0)
+                Coincidences[doc] = cosSimilarity;
         }
         return Coincidences;
     }
@@ -76,20 +76,20 @@ public class Similarity
     }
 
 
-    public static double Cos_Similarity(Document document, Dictionary<string, TermData> Pquery, double norm)
+    public static double CosSimilarity(Document document, Dictionary<string, TermData> Pquery, double norm)
     {
-        double vector_mult = 0;
+        double vectorMult = 0;
         foreach (var key in Pquery.Keys)
         {
             if (document.Content.ContainsKey(key))
             {
 
-                vector_mult += document.Content[key].TF_IDF * Pquery[key].TF_IDF;
+                vectorMult += document.Content[key].TF_IDF * Pquery[key].TF_IDF;
 
 
             }
         }
-        double cos_similarity = vector_mult / norm;//sacar Vector_Norm de docs en un inicio.
+        double cos_similarity = vectorMult / norm;//sacar Vector_Norm de docs en un inicio.
         return cos_similarity;
     }
 

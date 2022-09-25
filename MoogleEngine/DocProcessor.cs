@@ -41,15 +41,15 @@ public static class DocumentProcessor
     }
 
 
-    public static Dictionary<string, double> Get_IDF()
+    public static Dictionary<string, double> GetIDF()
     {
         if (IDFs is null)
         {
             int N = Document.Total_of_Docs;
             IDFs = new Dictionary<string, double>();
-            foreach (var item in docs)
+            foreach (var document in docs)
             {
-                foreach (var term in item.Content.Keys)
+                foreach (var term in document.Content.Keys)
                 {
                     if (IDFs.ContainsKey(term))
                     {
@@ -70,8 +70,8 @@ public static class DocumentProcessor
 
         return IDFs;
     }
-    public static Dictionary<string, double> IDF = Get_IDF();
-    public static void Setting_each_TF_IDF(Dictionary<string, double> IDFs)
+    public static Dictionary<string, double> IDF = GetIDF();
+    public static void SettingEachTFIDF(Dictionary<string, double> IDFs)
     {
         foreach (var doc in docs)
         {
@@ -83,14 +83,14 @@ public static class DocumentProcessor
         }
     }
 
-    public static Dictionary<string, TermData> Process_Query(string query)
+    public static Dictionary<string, TermData> ProcessQuery(string query)
     {
         string pattern = @"\w+";
         Dictionary<string, TermData> Pquery = ProcessText(query, pattern);
-        //Get_TF_IDF(IDF,Pquery);
+        //GetTFIDF(IDF,Pquery);
         return Pquery;
     }
-    public static void Get_TF_IDF(Dictionary<string, double> IDFs, Dictionary<string, TermData> Pquery)
+    public static void GetTFIDF(Dictionary<string, double> IDFs, Dictionary<string, TermData> Pquery)
     {
         foreach (var key in Pquery.Keys)
         {
