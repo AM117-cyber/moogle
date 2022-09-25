@@ -124,8 +124,8 @@ public class Similarity
       List<string> result = new List<string>();
         foreach (Match match in matches)
         {
-          
-           result.Add(match.Value.Replace("~", "").Replace(" ", ""));
+            result.Add(Regex.Replace(match.Value.ToLower().Normalize(NormalizationForm.FormD), @"[^a-zA-Z0-9 ]+", "").Trim());
+           //result.Add(match.Value.Replace("~", "").Replace(" ", ""));
 
         }
         return result;
