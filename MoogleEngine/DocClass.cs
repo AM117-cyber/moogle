@@ -12,7 +12,7 @@ public class Document
     public Document(string path, Dictionary<string,TermData> content)
     {
         this.Path = path;
-        this.Title = $"''{GettingTitle(path)}''";
+        this.Title = $"\"{GettingTitle(path)}\"";
         this.Content = content;
         this.WordCount = Regex.Split(File.ReadAllText(path).Trim(), pattern).Length;
     }
@@ -20,13 +20,9 @@ public class Document
 
     private string GettingTitle(string path)
     {
-        string title = string.Empty;
-        path = path.Remove(0, 11);
-        for (int i = 0; i < path.Length - 4; i++)
-        {
-            title += path[i];
+        var fileInfo = new FileInfo(path);
+        var title = fileInfo.Name.Replace(fileInfo.Extension,"");
 
-        }
         return title;
     }
     
